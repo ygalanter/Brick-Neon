@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8" />
+    <title>Brick Neon Config</title>
+    <script type="text/javascript" src="slate.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="slate.min.css" />
+</head>
+
+<body>
+    
+
+    <div class="item-container">
+        <div class="item-container-header">Brick Neon Config</div>
+        <div class="item-container-content">
+
+
+            <label class="item">
+                Hours and Minutes Separator
+                <select id="hoursMinutesSeparator" class="item-select">
+                    <option id="optColon" value="0" class="item-select-option">Colon :</option>
+                    <option id="optDot" value="1" class="item-select-option">Dot .</option>
+                </select>
+            </label>
+
+            <label class="item">
+                Date format
+                <select id="dateFormat" class="item-select">
+                    <option id="optMDY" value="0" class="item-select-option">Month Day Year</option>
+                    <option id="optDMY" value="1" class="item-select-option">Day Month Year</option>
+                    <option id="optYMD" value="2" class="item-select-option">YYYY-MM-DD</option>
+                </select>
+            </label>
+
+            
+            <label class="item" id="xDivLanguage">
+                Language
+                <select id="language" class="item-select">
+                    <option id="default" value="255" class="item-select-option">Default</option>
+                    <option id="catalan" value="5" class="item-select-option" >Català</option>
+                    <option id="italian" value="1" class="item-select-option">Italiano</option>
+                    <option id="malay" value="6" class="item-select-option" >Melayu</option>
+                    <option id="dutch" value="3" class="item-select-option" >Nederlandse</option>
+                    <option id="norvegian" value="4" class="item-select-option" >Norsk</option>
+                    <option id="swedish" value="0" class="item-select-option" >Svenska</option>
+                    <option id="russian" value="2" class="item-select-option" >Русский</option>
+                </select>
+            </label>
+
+
+            <label class="item">
+                Buzz on BT connect/disconnect
+                <input type="checkbox" class="item-checkbox" name="bluetoothBuzz" id="bluetoothBuzz">
+            </label>
+
+
+        </div>
+    </div>
+
+    <div class="item-container">
+        <div class="button-container">
+            <input type="button" class="item-button" value="SAVE" id="xbtnSave">
+        </div>
+    </div>
+
+    <div class="item-container">
+        <div class="button-container">
+            <input type="button" class="item-button" value="CANCEL" id="xbtnCancel">
+        </div>
+    </div>
+
+    <div class="item-container">
+        <div class="button-container">
+            <input type="button" value="My Starbucks fund" class="item-button" name="submit" onclick="location.href='https://www.paypal.me/yuriygalanter';">
+        </div>
+    </div>
+
+
+    <div class="item-container">
+        <div class="item-container-content">
+            <div class="item" style="font-size:small; line-height:130%">
+                If you like this watchface and would like to see it further developed as well as other wonderful Pebble apps and faces created, please know - I run on coffee. It's an essential fuel for inspiration and creativity. So if you click the Fund button above (or the ad below) - I won't run out of fuel :) Thanks!
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+   
+        // to get value of query string
+        function getURLVariable(name) {
+            name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+            var regexS = "[\\?&]" + name + "=([^&#]*)",
+                regex = new RegExp(regexS),
+                results = regex.exec(window.location.href);
+            if (results == null) return "";
+            else return results[1];
+        }
+
+        $(document).ready(function () {
+
+
+            // loading settings
+            try {
+                settings = JSON.parse(localStorage.getItem("brick_neon_settings"));
+            }
+            catch (err) {
+                settings = null;
+            }
+
+            if (settings == null) {
+                settings = {
+                    hoursMinutesSeparator: 0,
+                    dateFormat: 0,
+                    bluetoothBuzz: 0,
+                    language: 255
+                };
+            }
+
+            // setting checkboxes' values
+            if (settings.bluetoothBuzz == 1) $('#bluetoothBuzz').attr('checked', 'checked');
+          
+
+            // setting dropdown values
+            $('#hoursMinutesSeparator').val(settings.hoursMinutesSeparator);
+            $('#dateFormat').val(settings.dateFormat);
+            $('#language').val(settings.language || settings.language == 0 ? settings.language : 255);
+
+            //assigning save button
+
+            $('#xbtnSave').click(function () {
+
+                localStorage.setItem("brick_neon_settings", JSON.stringify(settings));
+
+                var location = (decodeURIComponent(getURLVariable('return_to')) || "pebblejs://close#") + encodeURIComponent(JSON.stringify(settings));
+                document.location = location;
+
+            })
+
+            //assigning cancel button
+            $('#xbtnCancel').click(function () {
+
+                var location = decodeURIComponent(getURLVariable('return_to')) || "pebblejs://close#";
+                document.location = location;
+
+            })
+
+            //assigning checkboxes
+            $("input[type=checkbox]").change(function () {
+                settings[this.id] = this.checked ? 1 : 0;
+            });
+
+
+            
+
+            //getting value of dropdowns
+            $('select').change(function (e) {
+                e.preventDefault();
+                var intVal = parseInt(this.value);
+                settings[this.id] = intVal;
+        
+            })
+
+        }
+     )
+
+    </script>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- Pebble Config -->
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-8184318363505287"
+         data-ad-slot="7086382952"
+         data-ad-format="auto"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+
+
+</body>
+</html>
