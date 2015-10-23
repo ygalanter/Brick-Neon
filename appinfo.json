@@ -1,0 +1,64 @@
+{
+    "appKeys": {
+        "KEY_BLUETOOTH_BUZZ": 7,
+        "KEY_DATE_FORMAT": 5,
+        "KEY_HOURS_MINUTES_SEPARATOR": 4,
+        "KEY_LANGUAGE": 10
+    },
+    "capabilities": [
+        "configurable"
+    ],
+    "companyName": "yuri@galanter.net",
+    "longName": "Brick Neon",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/Pebble_Logo_2015_noreg_color.png",
+                "name": "LOGO",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "images/back64.png",
+                "name": "BACK",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "fonts/Neon.ttf",
+                "name": "NEON_22",
+                "type": "font"
+            },
+            {
+                "characterRegex": "[0-9:.]",
+                "file": "fonts/Neon.ttf",
+                "name": "NEON_53",
+                "type": "font"
+            },
+            {
+                "characterRegex": "[0-9%]",
+                "file": "fonts/Neon.ttf",
+                "name": "NEON_18",
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Brick Neon",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
+    "versionLabel": "1.00",
+    "watchapp": {
+        "watchface": true
+    }
+}
