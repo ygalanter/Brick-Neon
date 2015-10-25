@@ -19,6 +19,7 @@ TextLayer *time_layer, *dow_layer, *date_layer, *battery_layer;
 EffectLayer *time_effect, *dow_effect, *date_effect, *back_effect, *battery_effect, *logo_effect;
 EffectOffset time_offset, dow_offset, date_offset, battery_offset, logo_offset;
 EffectMask back_mask;
+BitmapLayer *left_line, *right_line;
 
 BitmapLayer *logo_layer;
 GBitmap *logo_bitmap;
@@ -47,8 +48,9 @@ static void bluetooth_handler(bool state) {
   if (flag_bluetoothBuzz == 1) vibes_short_pulse();
   
   layer_set_hidden(bitmap_layer_get_layer(logo_layer), !state);
+  #ifdef PBL_COLOR
   layer_set_hidden(effect_layer_get_layer(logo_effect), !state);
-  
+  #endif
   
 }
 
@@ -59,7 +61,7 @@ static void battery_handler(BatteryChargeState state) {
   
   #ifdef PBL_COLOR
   
-    static GColor color;  
+    static GColor battery_color, battery_text_color, date_color;  
     // doing battery color in ranges with fall thru:
     //       100% - 50% - GColorJaegerGreen
     //       49% - 20% - GColorChromeYellow
@@ -70,16 +72,19 @@ static void battery_handler(BatteryChargeState state) {
          case 80: 
          case 70: 
          case 60: 
-         case 50: color = GColorJaegerGreen; break;
+         case 50: battery_color = GColorJaegerGreen; battery_text_color=GColorMintGreen; date_color = GColorChromeYellow; break;
          case 40: 
          case 30: 
-         case 20: color = GColorChromeYellow; break;
+         case 20: battery_color = GColorChromeYellow; battery_text_color = GColorPastelYellow; date_color = GColorGreen; break;
          case 10: 
-         case 0:  color = GColorMagenta; break;     
+         case 0:  battery_color = GColorMagenta; battery_text_color = GColorRichBrilliantLavender; date_color = GColorChromeYellow; break;     
      }
-       battery_offset.offset_color = color;
-       time_offset.offset_color = color;
-   
+       text_layer_set_text_color(time_layer, battery_text_color);
+       battery_offset.offset_color = battery_color;
+       time_offset.offset_color = battery_color;
+       time_offset.orig_color = battery_text_color;
+       date_offset.offset_color = date_color;
+        
   #endif
   
 }
@@ -161,7 +166,6 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
      uppercase(s_dow);
      text_layer_set_text(dow_layer, s_dow);
 
-           
    }
   
 }
@@ -231,17 +235,18 @@ static void window_load(Window *window) {
   
   // creating time layer with effects
   time_layer = create_text_layer(GRect(0, 28, window_bound.size.w, 55), RESOURCE_ID_NEON_53, GTextAlignmentCenter);
+  #ifdef PBL_COLOR
+    text_layer_set_text_color(time_layer, GColorMintGreen);
+  #endif
  
   // creating DOW layer with effects
   dow_layer = create_text_layer(GRect(0, 90, window_bound.size.w, 25), RESOURCE_ID_NEON_22, GTextAlignmentCenter);
- 
- 
+  
   // creating date layer with effects
   date_layer = create_text_layer(GRect(0, 120, window_bound.size.w, 25), RESOURCE_ID_NEON_22, GTextAlignmentCenter);
- 
   
   // creating battery layer with effects
-  battery_layer = create_text_layer(GRect(48, 147, 43, 20), RESOURCE_ID_NEON_18, GTextAlignmentCenter);
+  battery_layer = create_text_layer(GRect(49, 147, 47, 20), RESOURCE_ID_NEON_18, GTextAlignmentCenter);
 
   
   //creating Pebble Logo
@@ -251,49 +256,61 @@ static void window_load(Window *window) {
   bitmap_layer_set_bitmap(logo_layer, logo_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(logo_layer));
   
+  //creating lines for surrounding battery percentage
+  left_line = bitmap_layer_create(GRect(4, 157, 43, 2));
+  bitmap_layer_set_background_color(left_line, GColorWhite);
+  layer_add_child(window_layer, bitmap_layer_get_layer(left_line));
+  
+  right_line = bitmap_layer_create(GRect(97, 157, 43, 2));
+  bitmap_layer_set_background_color(right_line, GColorWhite);
+  layer_add_child(window_layer, bitmap_layer_get_layer(right_line));
+  
   #ifdef PBL_COLOR
   
     time_effect = effect_layer_create(GRect(0, 30, window_bound.size.w, 55));
-    time_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
+    time_offset = (EffectOffset){.orig_color = GColorMintGreen, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(time_effect, effect_outline, &time_offset);
+    effect_layer_add_effect(time_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(time_effect));
   
     dow_effect = effect_layer_create(GRect(0, 90, window_bound.size.w, 30));
     dow_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(dow_effect, effect_outline, &dow_offset);
+    effect_layer_add_effect(dow_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(dow_effect));
   
     date_effect = effect_layer_create(GRect(0, 120, window_bound.size.w, 30));
     date_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorChromeYellow, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(date_effect, effect_outline, &date_offset);
+    effect_layer_add_effect(date_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(date_effect));
   
-    battery_effect = effect_layer_create(GRect(48, 147, 43, 20));
+    battery_effect = effect_layer_create(GRect(0, 147, 144, 20));
     battery_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(battery_effect, effect_outline, &battery_offset);
+    effect_layer_add_effect(battery_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(battery_effect));
   
     logo_effect = effect_layer_create(GRect(14,0,115,35));
     logo_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(logo_effect, effect_outline, &logo_offset);
+    effect_layer_add_effect(logo_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(logo_effect));
  
   #endif
   
   
-  // background bitmap effect
+  // background bitmap & blur effect
   #ifndef PBL_PLATFORM_APLITE
-    back_effect = effect_layer_create(window_bound);
-  #else
-    back_effect = effect_layer_create(GRect(0,0,144,168));
+     back_effect = effect_layer_create(window_bound);
+     back_mask = (EffectMask){.bitmap_background = gbitmap_create_with_resource(RESOURCE_ID_BACK), .background_color = GColorClear, .bitmap_mask = NULL, .text = NULL };
+     back_mask.mask_colors = malloc(sizeof(GColor)*2);
+     back_mask.mask_colors[0] = GColorBlack;
+     back_mask.mask_colors[1] = GColorClear;
+     effect_layer_add_effect(back_effect, effect_mask, &back_mask);
+     layer_add_child(window_layer, effect_layer_get_layer(back_effect));
   #endif
-  effect_layer_add_effect(back_effect, effect_blur, (void *)1);
-  back_mask = (EffectMask){.bitmap_background = gbitmap_create_with_resource(RESOURCE_ID_BACK), .background_color = GColorClear, .bitmap_mask = NULL, .text = NULL };
-  back_mask.mask_colors = malloc(sizeof(GColor)*2);
-  back_mask.mask_colors[0] = GColorBlack;
-  back_mask.mask_colors[1] = GColorClear;
-  effect_layer_add_effect(back_effect, effect_mask, &back_mask);
-  layer_add_child(window_layer, effect_layer_get_layer(back_effect));
+ 
   
 }
 
@@ -303,11 +320,13 @@ static void window_unload(Window *window) {
    text_layer_destroy(date_layer);
    text_layer_destroy(battery_layer);
    bitmap_layer_destroy(logo_layer);
+   bitmap_layer_destroy(left_line);
+   bitmap_layer_destroy(right_line);
    effect_layer_destroy(time_effect);
    effect_layer_destroy(dow_effect);
    effect_layer_destroy(date_effect);
    effect_layer_destroy(battery_effect);
-   gbitmap_destroy(back_mask.bitmap_background);
+   if (back_mask.bitmap_background) gbitmap_destroy(back_mask.bitmap_background);
    effect_layer_destroy(back_effect);
 }
 

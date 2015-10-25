@@ -26,14 +26,15 @@
                 "file": "images/back64.png",
                 "name": "BACK",
                 "targetPlatforms": [
-                    "aplite",
                     "basalt"
                 ],
                 "type": "png"
             },
             {
+                "characterRegex": "[0-9%]",
                 "file": "fonts/Neon.ttf",
-                "name": "NEON_22",
+                "name": "NEON_18",
+                "trackingAdjust": 1,
                 "type": "font"
             },
             {
@@ -43,9 +44,9 @@
                 "type": "font"
             },
             {
-                "characterRegex": "[0-9%]",
                 "file": "fonts/Neon.ttf",
-                "name": "NEON_18",
+                "name": "NEON_22",
+                "trackingAdjust": 1,
                 "type": "font"
             }
         ]
@@ -57,7 +58,7 @@
         "basalt"
     ],
     "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
-    "versionLabel": "1.00",
+    "versionLabel": "1.02",
     "watchapp": {
         "watchface": true
     }
