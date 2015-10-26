@@ -330,10 +330,24 @@ static void window_unload(Window *window) {
    effect_layer_destroy(back_effect);
 }
 
+#ifndef PBL_SDK_2
+static void app_focus_changed(bool focused) {
+  if (focused) { // on resuming focus - restore background
+    layer_mark_dirty(effect_layer_get_layer(back_effect));
+  }
+}
+#endif
 
 void handle_init(void) {
   //going international
   setlocale(LC_ALL, "");
+  
+  #ifndef PBL_SDK_2
+  // need to catch when app resumes focus after notification, otherwise background won't restore
+  app_focus_service_subscribe_handlers((AppFocusHandlers){
+    .did_focus = app_focus_changed
+  });
+  #endif
   
   my_window = window_create();
   window_set_background_color(my_window, GColorBlack);
@@ -386,6 +400,9 @@ void handle_deinit(void) {
   battery_state_service_unsubscribe();
   bluetooth_connection_service_unsubscribe();
   app_message_deregister_callbacks();
+  #ifndef PBL_SDK_2
+    app_focus_service_unsubscribe();
+  #endif
 }
 
 int main(void) {
