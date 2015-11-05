@@ -3,72 +3,80 @@
 #include "effects.h"
 
 #ifdef PBL_COLOR
-static void blur_(uint8_t *bitmap_data, int bytes_per_row, GRect position, uint16_t line, uint8_t *dest, uint8_t radius){
-  uint8_t (*fb_a)[bytes_per_row] = (uint8_t (*)[bytes_per_row])bitmap_data;
-  uint16_t total[3] = {0,0,0};
+static void blur_(const GBitmap *fb, const GRect fb_bounds, uint16_t row, uint16_t x_start, uint16_t x_end, uint8_t *dest, uint8_t radius){
+  uint16_t total[3];
   uint8_t  nb_points = 0;
-  GPoint p = {0,0};
-  for (uint16_t x = 0; x < position.size.w; ++x) {
+
+  for (uint16_t x = x_start; x < x_end; ++x) {
     total[0] = total[1] = total[2] = 0;
     nb_points = 0;
-    p.y = position.origin.y + line - radius;
-    for (uint8_t ky = 0; ky <= 2*radius; ++ky){
-      p.x = position.origin.x + x - radius;
-      for (uint8_t kx = 0; kx <= 2*radius; ++kx){
-        if(grect_contains_point(&position, &p)){
-          GColor8 color = (GColor8)fb_a[p.y][p.x];
-          total[0] += color.r;
-          total[1] += color.g;
-          total[2] += color.b;
-          nb_points++;
+    for (int16_t ky = row - radius; ky <= row + radius; ++ky){
+      if(ky>=0 && ky<fb_bounds.size.h){
+        GBitmapDataRowInfo row_info = gbitmap_get_data_row_info(fb, ky);
+        for (int16_t kx = x - radius; kx <= x + radius; ++kx){
+          if(row_info.min_x <= kx && kx <= row_info.max_x)
+          {
+            GColor8 color = (GColor8)*(row_info.data + kx);
+            total[0] += color.r;
+            total[1] += color.g;
+            total[2] += color.b;
+            nb_points++;
+          }
         }
-        p.x++;
       }
-      p.y++;
     }
     total[0] = (total[0] * 0x55) / nb_points;
     total[1] = (total[1] * 0x55) / nb_points;
     total[2] = (total[2] * 0x55) / nb_points;
-    dest[x] = GColorFromRGB(total[0], total[1], total[2]).argb; 
+    dest[x-x_start] = GColorFromRGB(total[0], total[1], total[2]).argb; 
   }
 }
 #endif
 
-void effect_blur(GContext* ctx,  GRect position, void* param){
+#define max(a,b) a>b?a:b
+#define min(a,b) a>b?b:a
+
+void effect_blur(GContext* ctx, GRect position, void* param){
 #ifdef PBL_COLOR
   //capturing framebuffer bitmap
   GBitmap *fb = graphics_capture_frame_buffer(ctx);
-  uint8_t *bitmap_data =  gbitmap_get_data(fb);
-  int bytes_per_row = gbitmap_get_bytes_per_row(fb);
+  GRect fb_bounds = gbitmap_get_bounds(fb);
 
-  
-  
   uint8_t radius = (uint8_t)(uint32_t)param; // Not very elegant... sorry
-  uint8_t (*fb_a)[bytes_per_row] = (uint8_t (*)[bytes_per_row])bitmap_data;
   uint16_t offset_x = position.origin.x;
   uint16_t offset_y = position.origin.y;
   uint16_t width    = position.size.w;
   uint16_t height   = position.size.h;
- 
-  uint8_t *buffer = malloc(width * (radius + 1));
- 
+  
+  uint8_t *buffer               = malloc(width * (radius + 1));
+  GBitmapDataRowInfo* row_infos = malloc(sizeof(GBitmapDataRowInfo) * (radius + 1));
+  uint8_t circular_index = 0;
+
   uint16_t h=0;
-  for(; h<(radius+1); h++){
-    blur_(bitmap_data, bytes_per_row, position, h, buffer + h*width, radius);
+  for(; h<radius+1; h++){
+    row_infos[h] = gbitmap_get_data_row_info(fb, offset_y+h);
+    row_infos[h].min_x = max(row_infos[h].min_x, offset_x);
+    row_infos[h].max_x = min(offset_x + width, row_infos[h].max_x);
+    blur_(fb, fb_bounds, offset_y+h, row_infos[h].min_x, row_infos[h].max_x, buffer + h*width, radius);
   }
- 
+
   for(; h<height; h++){
-    memcpy(&fb_a[offset_y + h - (radius + 1)][offset_x], buffer, width);
-    memcpy(buffer, buffer + width, radius * width);
-    blur_(bitmap_data, bytes_per_row, position, h, buffer + radius*width, radius);
+    memcpy(row_infos[circular_index].data + row_infos[circular_index].min_x, buffer + circular_index * width, row_infos[circular_index].max_x - row_infos[circular_index].min_x);
+    row_infos[circular_index] = gbitmap_get_data_row_info(fb, offset_y+h);
+    row_infos[circular_index].min_x = max(row_infos[circular_index].min_x, offset_x);
+    row_infos[circular_index].max_x = min(offset_x + width, row_infos[circular_index].max_x);
+    blur_(fb, fb_bounds, offset_y+h, row_infos[circular_index].min_x, row_infos[circular_index].max_x, buffer + circular_index*width, radius);
+    circular_index = circular_index < radius ? circular_index + 1 : 0;
   }
 
   h=0;
   for(; h<radius; h++){
-    memcpy(&fb_a[offset_y + height - (radius + 1) + h][offset_x] , buffer + h*width, width);
+    memcpy(row_infos[circular_index].data + row_infos[circular_index].min_x, buffer + circular_index*width, row_infos[circular_index].max_x - row_infos[circular_index].min_x);
+    circular_index = circular_index < radius ? circular_index + 1 : 0;
   }
   
   free(buffer);
+  free(row_infos);
   
   graphics_release_frame_buffer(ctx, fb);
 #endif

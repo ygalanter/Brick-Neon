@@ -114,3 +114,12 @@ effect_cb effect_fps;
 effect_cb effect_shadow;
 
 effect_cb effect_outline;
+
+
+#ifndef PBL_ROUND
+  #define SCREEN_WIDTH 144
+  #define SCREEN_HEIHGT 168
+#else
+  #define SCREEN_WIDTH 180
+  #define SCREEN_HEIHGT 180
+#endif

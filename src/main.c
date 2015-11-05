@@ -233,47 +233,55 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
 static void window_load(Window *window) {
   
-  // creating time layer with effects
-  time_layer = create_text_layer(GRect(0, 28, window_bound.size.w, 55), RESOURCE_ID_NEON_53, GTextAlignmentCenter);
-  #ifdef PBL_COLOR
-    text_layer_set_text_color(time_layer, GColorMintGreen);
-  #endif
- 
-  // creating DOW layer with effects
-  dow_layer = create_text_layer(GRect(0, 90, window_bound.size.w, 25), RESOURCE_ID_NEON_22, GTextAlignmentCenter);
-  
-  // creating date layer with effects
-  date_layer = create_text_layer(GRect(0, 120, window_bound.size.w, 25), RESOURCE_ID_NEON_22, GTextAlignmentCenter);
-  
-  // creating battery layer with effects
-  battery_layer = create_text_layer(GRect(49, 147, 47, 20), RESOURCE_ID_NEON_18, GTextAlignmentCenter);
-
-  
   //creating Pebble Logo
-  logo_layer = bitmap_layer_create(GRect(14,1,115,35));
+  logo_layer = PBL_IF_RECT_ELSE(bitmap_layer_create(GRect(14,1,115,35)), bitmap_layer_create(GRect(36,18,115,35)));
   bitmap_layer_set_compositing_mode(logo_layer, GCompOpSet); //make transparent
   logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_LOGO);
   bitmap_layer_set_bitmap(logo_layer, logo_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(logo_layer));
   
+  // creating time layer with effects
+  time_layer = create_text_layer(PBL_IF_RECT_ELSE(GRect(0, 25, window_bound.size.w, 55), GRect(0, 38, window_bound.size.w, 55)), RESOURCE_ID_NEON_53, GTextAlignmentCenter);
+  #ifdef PBL_COLOR
+    text_layer_set_text_color(time_layer, GColorMintGreen);
+  #endif
+ 
+  // creating DOW layer with effects
+  dow_layer = create_text_layer(PBL_IF_RECT_ELSE(GRect(0, 90, window_bound.size.w, 30), GRect(0, 94, window_bound.size.w, 30)), RESOURCE_ID_NEON_22, GTextAlignmentCenter);
+  
+  // creating date layer with effects
+  date_layer = create_text_layer(GRect(0, 120, window_bound.size.w, 30), PBL_IF_RECT_ELSE(RESOURCE_ID_NEON_22, RESOURCE_ID_NEON_20), GTextAlignmentCenter);
+  
+  // creating battery layer with effects
+  battery_layer = create_text_layer(GRect(window_bound.size.w/2 - 47/2, 147, 47, 20), RESOURCE_ID_NEON_18, GTextAlignmentCenter);
+
+  
   //creating lines for surrounding battery percentage
-  left_line = bitmap_layer_create(GRect(4, 157, 43, 2));
-  bitmap_layer_set_background_color(left_line, GColorWhite);
-  layer_add_child(window_layer, bitmap_layer_get_layer(left_line));
   
-  right_line = bitmap_layer_create(GRect(97, 157, 43, 2));
-  bitmap_layer_set_background_color(right_line, GColorWhite);
-  layer_add_child(window_layer, bitmap_layer_get_layer(right_line));
+    left_line = bitmap_layer_create(GRect(window_bound.origin.x + 4, 157, window_bound.size.w / 2  - 28, 2));
+    bitmap_layer_set_background_color(left_line, GColorWhite);
+    layer_add_child(window_layer, bitmap_layer_get_layer(left_line));
+    
+    right_line = bitmap_layer_create(GRect(window_bound.size.w / 2 + 25, 157, window_bound.size.w / 2 - 30, 2));
+    bitmap_layer_set_background_color(right_line, GColorWhite);
+    layer_add_child(window_layer, bitmap_layer_get_layer(right_line));
   
+  // applying outline & blur to create "neon" effect
   #ifdef PBL_COLOR
   
-    time_effect = effect_layer_create(GRect(0, 30, window_bound.size.w, 55));
+    logo_effect = PBL_IF_RECT_ELSE(effect_layer_create(GRect(14,1,115,35)), effect_layer_create(GRect(36,18,115,35)));
+    logo_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
+    effect_layer_add_effect(logo_effect, effect_outline, &logo_offset);
+    effect_layer_add_effect(logo_effect, effect_blur, (void *)1);
+    layer_add_child(window_layer, effect_layer_get_layer(logo_effect));
+   
+    time_effect = effect_layer_create(PBL_IF_RECT_ELSE(GRect(0, 25, window_bound.size.w, 55), GRect(0, 38, window_bound.size.w, 55)));
     time_offset = (EffectOffset){.orig_color = GColorMintGreen, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(time_effect, effect_outline, &time_offset);
     effect_layer_add_effect(time_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(time_effect));
   
-    dow_effect = effect_layer_create(GRect(0, 90, window_bound.size.w, 30));
+    dow_effect = effect_layer_create(PBL_IF_RECT_ELSE(GRect(0, 90, window_bound.size.w, 30), GRect(0, 94, window_bound.size.w, 30)));
     dow_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(dow_effect, effect_outline, &dow_offset);
     effect_layer_add_effect(dow_effect, effect_blur, (void *)1);
@@ -285,22 +293,16 @@ static void window_load(Window *window) {
     effect_layer_add_effect(date_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(date_effect));
   
-    battery_effect = effect_layer_create(GRect(0, 147, 144, 20));
+    battery_effect = effect_layer_create(GRect(0, 147, window_bound.size.w, 20));
     battery_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(battery_effect, effect_outline, &battery_offset);
     effect_layer_add_effect(battery_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(battery_effect));
   
-    logo_effect = effect_layer_create(GRect(14,0,115,35));
-    logo_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
-    effect_layer_add_effect(logo_effect, effect_outline, &logo_offset);
-    effect_layer_add_effect(logo_effect, effect_blur, (void *)1);
-    layer_add_child(window_layer, effect_layer_get_layer(logo_effect));
- 
-  #endif
+   #endif
   
   
-  // background bitmap & blur effect
+  // background bitmap blur effect
   #ifndef PBL_PLATFORM_APLITE
      back_effect = effect_layer_create(window_bound);
      back_mask = (EffectMask){.bitmap_background = gbitmap_create_with_resource(RESOURCE_ID_BACK), .background_color = GColorClear, .bitmap_mask = NULL, .text = NULL };

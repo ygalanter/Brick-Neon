@@ -794,7 +794,7 @@ void effect_outline(GContext* ctx, GRect position, void* param) {
          
             for (int i = 0; i < 4; i++) {
               // TODO: centralize the constants
-              if (outlinex[i] >= 0 && outlinex[i] <=144 && outliney[i] >= 0 && outliney[i] <= 168) {
+              if (outlinex[i] >= 0 && outlinex[i] <= SCREEN_WIDTH && outliney[i] >= 0 && outliney[i] <= SCREEN_HEIHGT) {
                 temp_pixel = (GColor)get_pixel(bitmap_info, outliney[i], outlinex[i]);
                 if (!gcolor_equal(temp_pixel, outline->orig_color)) {
                   #ifdef PBL_COLOR

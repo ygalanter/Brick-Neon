@@ -14,11 +14,23 @@
     "resources": {
         "media": [
             {
+                "file": "images/icon_aplite.png",
+                "menuIcon": true,
+                "name": "MENU_IMAGE",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
+            {
                 "file": "images/Pebble_Logo_2015_noreg_color.png",
                 "name": "LOGO",
                 "targetPlatforms": [
                     "aplite",
-                    "basalt"
+                    "basalt",
+                    "chalk"
                 ],
                 "type": "png"
             },
@@ -26,14 +38,20 @@
                 "file": "images/back64.png",
                 "name": "BACK",
                 "targetPlatforms": [
-                    "basalt"
+                    "basalt",
+                    "chalk"
                 ],
                 "type": "png"
             },
             {
-                "characterRegex": "[0-9%]",
                 "file": "fonts/Neon.ttf",
-                "name": "NEON_18",
+                "name": "NEON_20",
+                "trackingAdjust": 1,
+                "type": "font"
+            },
+            {
+                "file": "fonts/Neon.ttf",
+                "name": "NEON_22",
                 "trackingAdjust": 1,
                 "type": "font"
             },
@@ -44,8 +62,9 @@
                 "type": "font"
             },
             {
+                "characterRegex": "[0-9%]",
                 "file": "fonts/Neon.ttf",
-                "name": "NEON_22",
+                "name": "NEON_18",
                 "trackingAdjust": 1,
                 "type": "font"
             }
@@ -55,10 +74,11 @@
     "shortName": "Brick Neon",
     "targetPlatforms": [
         "aplite",
-        "basalt"
+        "basalt",
+        "chalk"
     ],
     "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
-    "versionLabel": "1.03",
+    "versionLabel": "1.14",
     "watchapp": {
         "watchface": true
     }
