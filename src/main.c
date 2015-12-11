@@ -4,6 +4,10 @@
 #include "languages.h"
 #include "ctype.h"
 
+#ifdef PBL_RECT  // on rectangular watches need to dynamically change DoW font based on length
+  GFont font_neon_18, font_neon_22;
+#endif
+
 Window *my_window;
 Layer *window_layer;
 GRect window_bound;
@@ -153,7 +157,7 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
          break;
        
      }
-  
+     
      uppercase(s_date);
      text_layer_set_text(date_layer, s_date);
      
@@ -164,6 +168,17 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
      }
      
      uppercase(s_dow);
+     
+     #ifdef PBL_RECT  // on rectangular watches need to dynamically change DoW font based on length
+      if (strlen(s_dow) >= 10) {
+          text_layer_set_font(dow_layer, font_neon_18);
+      } else {
+          text_layer_set_font(dow_layer, font_neon_22);        
+      }
+     #endif
+
+     
+     
      text_layer_set_text(dow_layer, s_dow);
 
    }
@@ -341,6 +356,13 @@ static void app_focus_changed(bool focused) {
 #endif
 
 void handle_init(void) {
+  
+  #ifdef PBL_RECT  // on rectangular watches need to dynamically change DoW font based on length
+    font_neon_18 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_18));
+    font_neon_22 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_22));
+  #endif
+  
+  
   //going international
   setlocale(LC_ALL, "");
   
