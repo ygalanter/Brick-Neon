@@ -368,9 +368,9 @@ void handle_init(void) {
   
   #ifndef PBL_SDK_2
   // need to catch when app resumes focus after notification, otherwise background won't restore
-  app_focus_service_subscribe_handlers((AppFocusHandlers){
-    .did_focus = app_focus_changed
-  });
+  //app_focus_service_subscribe_handlers((AppFocusHandlers){
+  //  .did_focus = app_focus_changed
+  //});
   #endif
   
   my_window = window_create();
@@ -414,7 +414,7 @@ void handle_init(void) {
   app_message_register_inbox_received(inbox_received_callback);
   
   // Open AppMessage
-  app_message_open(APP_MESSAGE_INBOX_SIZE_MINIMUM, APP_MESSAGE_OUTBOX_SIZE_MINIMUM); 
+  app_message_open(500, 500); 
   
 }
 

@@ -9,6 +9,7 @@
         "configurable"
     ],
     "companyName": "yuri@galanter.net",
+    "enableMultiJS": false,
     "longName": "Brick Neon",
     "projectType": "native",
     "resources": {
@@ -17,22 +18,14 @@
                 "file": "images/icon_aplite.png",
                 "menuIcon": true,
                 "name": "MENU_IMAGE",
-                "targetPlatforms": [
-                    "aplite",
-                    "basalt",
-                    "chalk"
-                ],
-                "type": "png"
+                "targetPlatforms": null,
+                "type": "bitmap"
             },
             {
                 "file": "images/Pebble_Logo_2015_noreg_color.png",
                 "name": "LOGO",
-                "targetPlatforms": [
-                    "aplite",
-                    "basalt",
-                    "chalk"
-                ],
-                "type": "png"
+                "targetPlatforms": null,
+                "type": "bitmap"
             },
             {
                 "file": "images/back64.png",
@@ -41,7 +34,7 @@
                     "basalt",
                     "chalk"
                 ],
-                "type": "png"
+                "type": "bitmap"
             },
             {
                 "file": "fonts/Neon.ttf",
@@ -77,7 +70,7 @@
         "chalk"
     ],
     "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
-    "versionLabel": "1.15",
+    "versionLabel": "1.18",
     "watchapp": {
         "watchface": true
     }
