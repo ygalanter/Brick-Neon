@@ -17,7 +17,7 @@ char s_time[] = "88.44mm"; //test
 char s_dow[] = "WEDNESDAY     "; //test  
 char s_battery[] = "100%"; //test
 
-uint8_t flag_hoursMinutesSeparator, flag_dateFormat, flag_bluetoothBuzz, flag_language;
+uint8_t flag_hoursMinutesSeparator, flag_dateFormat, flag_bluetooth_alert, flag_language, is_buzz_enabled;
 
 TextLayer *time_layer, *dow_layer, *date_layer, *battery_layer;
 EffectLayer *time_effect, *dow_effect, *date_effect, *back_effect, *battery_effect, *logo_effect;
@@ -49,13 +49,42 @@ TextLayer* create_text_layer(GRect coords, int font, GTextAlignment align) {
 
 static void bluetooth_handler(bool state) {
   
-  if (flag_bluetoothBuzz == 1) vibes_short_pulse();
+  // if Bluetooth alert is totally disabled - hide BT and exit from here
+  if (flag_bluetooth_alert == BLUETOOTH_ALERT_DISABLED) {
+    layer_set_hidden(bitmap_layer_get_layer(logo_layer), true);
+    #ifdef PBL_COLOR
+    layer_set_hidden(effect_layer_get_layer(logo_effect), true);
+    #endif
+    return;  
+  }
   
+  //otherwise hide or show BR according to state
   layer_set_hidden(bitmap_layer_get_layer(logo_layer), !state);
   #ifdef PBL_COLOR
   layer_set_hidden(effect_layer_get_layer(logo_effect), !state);
   #endif
   
+  // if buzz is disabled - exit from here
+  if (flag_bluetooth_alert == BLUETOOTH_ALERT_SILENT || is_buzz_enabled == 0) {
+     return;
+  }  
+  
+  //otherwise buzz according to settings
+  switch (flag_bluetooth_alert){
+    case BLUETOOTH_ALERT_WEAK:
+      vibes_enqueue_custom_pattern(VIBE_PATTERN_WEAK);
+      break;
+    case BLUETOOTH_ALERT_NORMAL:
+      vibes_enqueue_custom_pattern(VIBE_PATTERN_NORMAL);
+      break;
+    case BLUETOOTH_ALERT_STRONG:
+    vibes_enqueue_custom_pattern(VIBE_PATTERN_STRONG);
+      break;
+    case BLUETOOTH_ALERT_DOUBLE:
+      vibes_enqueue_custom_pattern(VIBE_PATTERN_DOUBLE);
+      break;    
+  }
+
 }
 
 
@@ -213,11 +242,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
           need_time = 1;
         }  
         break;
-      case KEY_BLUETOOTH_BUZZ:
-        if (t->value->int32 !=flag_bluetoothBuzz) {
-          persist_write_int(KEY_BLUETOOTH_BUZZ, t->value->int32);
-          flag_bluetoothBuzz = t->value->int32;
-        }  
+      case KEY_BLUETOOTH_ALERT:
+         if (flag_bluetooth_alert != t->value->uint8){
+              persist_write_int(KEY_BLUETOOTH_ALERT, t->value->uint8);
+              flag_bluetooth_alert = t->value->uint8;
+              is_buzz_enabled = 0;
+              bluetooth_handler(bluetooth_connection_service_peek());
+              is_buzz_enabled = 1;
+         }  
         break;
       case KEY_LANGUAGE:
         if (t->value->int32 !=flag_language) {
@@ -388,14 +420,14 @@ void handle_init(void) {
   
   flag_hoursMinutesSeparator = persist_exists(KEY_HOURS_MINUTES_SEPARATOR)? persist_read_int(KEY_HOURS_MINUTES_SEPARATOR) : 0;
   flag_dateFormat = persist_exists(KEY_DATE_FORMAT)? persist_read_int(KEY_DATE_FORMAT) : 0;
-  flag_bluetoothBuzz = persist_exists(KEY_BLUETOOTH_BUZZ)? persist_read_int(KEY_BLUETOOTH_BUZZ) : 0;
   flag_language = persist_exists(KEY_LANGUAGE)? persist_read_int(KEY_LANGUAGE) : LANG_DEFAULT;
+  flag_bluetooth_alert = persist_exists(KEY_BLUETOOTH_ALERT)? persist_read_int(KEY_BLUETOOTH_ALERT) : 0;
   
   // initial bluetooth check
-  flag_bluetoothBuzz = 0;
-  bluetooth_connection_service_subscribe(bluetooth_handler);
+  is_buzz_enabled = 0;
   bluetooth_handler(bluetooth_connection_service_peek());
-  flag_bluetoothBuzz = persist_exists(KEY_BLUETOOTH_BUZZ)? persist_read_int(KEY_BLUETOOTH_BUZZ) : 0;
+  is_buzz_enabled = 1;
+  bluetooth_connection_service_subscribe(bluetooth_handler);
   
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   

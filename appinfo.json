@@ -1,6 +1,6 @@
 {
     "appKeys": {
-        "KEY_BLUETOOTH_BUZZ": 7,
+        "KEY_BLUETOOTH_ALERT": 7,
         "KEY_DATE_FORMAT": 5,
         "KEY_HOURS_MINUTES_SEPARATOR": 4,
         "KEY_LANGUAGE": 10
@@ -9,7 +9,7 @@
         "configurable"
     ],
     "companyName": "yuri@galanter.net",
-    "enableMultiJS": false,
+    "enableMultiJS": true,
     "longName": "Brick Neon",
     "projectType": "native",
     "resources": {
@@ -70,7 +70,7 @@
         "chalk"
     ],
     "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
-    "versionLabel": "1.18",
+    "versionLabel": "1.19",
     "watchapp": {
         "watchface": true
     }

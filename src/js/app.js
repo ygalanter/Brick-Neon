@@ -1,4 +1,4 @@
-var version = '1.18';
+var version = '1.19';
 
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', 
@@ -35,7 +35,7 @@ Pebble.addEventListener("webviewclosed",
       // preparing app message
       app_message_json.KEY_HOURS_MINUTES_SEPARATOR = settings.hoursMinutesSeparator;
       app_message_json.KEY_DATE_FORMAT = settings.dateFormat;
-      app_message_json.KEY_BLUETOOTH_BUZZ = settings.bluetoothBuzz;
+      app_message_json.KEY_BLUETOOTH_ALERT = settings.bluetoothAlert; // new 1.19
       app_message_json.KEY_LANGUAGE = settings.language;
      
       
