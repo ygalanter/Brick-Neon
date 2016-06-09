@@ -1,0 +1,83 @@
+{
+    "author": "yuri@galanter.net",
+    "dependencies": {
+        "pebble-effect-layer": "^1.0.0"
+    },
+    "keywords": [],
+    "name": "brick-neon",
+    "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
+        "displayName": "Brick Neon",
+        "enableMultiJS": true,
+        "messageKeys": {
+            "KEY_BLUETOOTH_ALERT": 7,
+            "KEY_DATE_FORMAT": 5,
+            "KEY_HOURS_MINUTES_SEPARATOR": 4,
+            "KEY_LANGUAGE": 10
+        },
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "images/icon_aplite.png",
+                    "menuIcon": true,
+                    "name": "MENU_IMAGE",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/Pebble_Logo_2015_noreg_color.png",
+                    "name": "LOGO",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/back64.png",
+                    "name": "BACK",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_18",
+                    "trackingAdjust": 1,
+                    "type": "font"
+                },
+                {
+                    "characterRegex": "[0-9:.]",
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_53",
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_22",
+                    "trackingAdjust": 1,
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_20",
+                    "trackingAdjust": 1,
+                    "type": "font"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk"
+        ],
+        "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.20.0"
+}

@@ -1,5 +1,5 @@
 #include <pebble.h>
-#include "effect_layer.h"
+#include <pebble-effect-layer/pebble-effect-layer.h>
 #include "main.h"
 #include "languages.h"
 #include "ctype.h"
