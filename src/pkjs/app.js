@@ -1,4 +1,4 @@
-var version = '1.19';
+var version = '1.22';
 
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', 

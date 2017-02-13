@@ -1,7 +1,7 @@
 {
     "author": "yuri@galanter.net",
     "dependencies": {
-        "pebble-effect-layer": "^1.0.0"
+        "pebble-effect-layer": "^1.1.4"
     },
     "keywords": [],
     "name": "brick-neon",
@@ -21,30 +21,14 @@
         "resources": {
             "media": [
                 {
-                    "file": "images/icon_aplite.png",
-                    "menuIcon": true,
-                    "name": "MENU_IMAGE",
-                    "targetPlatforms": null,
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/Pebble_Logo_2015_noreg_color.png",
-                    "name": "LOGO",
-                    "targetPlatforms": null,
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/back64.png",
-                    "name": "BACK",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk"
-                    ],
-                    "type": "bitmap"
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_20",
+                    "trackingAdjust": 1,
+                    "type": "font"
                 },
                 {
                     "file": "fonts/Neon.ttf",
-                    "name": "NEON_18",
+                    "name": "NEON_22",
                     "trackingAdjust": 1,
                     "type": "font"
                 },
@@ -56,15 +40,31 @@
                 },
                 {
                     "file": "fonts/Neon.ttf",
-                    "name": "NEON_22",
+                    "name": "NEON_18",
                     "trackingAdjust": 1,
                     "type": "font"
                 },
                 {
-                    "file": "fonts/Neon.ttf",
-                    "name": "NEON_20",
-                    "trackingAdjust": 1,
-                    "type": "font"
+                    "file": "images/back64.png",
+                    "name": "BACK",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "emery"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/Pebble_Logo_2015_noreg_color.png",
+                    "name": "LOGO",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/icon_aplite.png",
+                    "name": "MENU_IMAGE",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
                 }
             ]
         },
@@ -72,12 +72,13 @@
         "targetPlatforms": [
             "aplite",
             "basalt",
-            "chalk"
+            "chalk",
+            "diorite"
         ],
         "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "1.20.0"
+    "version": "1.24.0"
 }

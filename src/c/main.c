@@ -12,7 +12,11 @@ Window *my_window;
 Layer *window_layer;
 GRect window_bound;
 
-char s_date[] = "21  FEB  2015     "; //test
+char s_date[20]; //test
+
+#define DEF_DATE_LEN 11 // length of default date e.g. "SEP 23 2016"
+uint8_t date_length; //calculated date length
+
 char s_time[] = "88.44mm"; //test
 char s_dow[] = "WEDNESDAY     "; //test  
 char s_battery[] = "100%"; //test
@@ -28,12 +32,6 @@ BitmapLayer *left_line, *right_line;
 BitmapLayer *logo_layer;
 GBitmap *logo_bitmap;
 
-void uppercase(char *sPtr) {  
-    while(*sPtr != '\0') {
-         *sPtr = toupper ( ( unsigned char ) *sPtr );
-         ++sPtr;
-    }
-}
 
 //creates text layer at given coordinates, given font and alignment  
 TextLayer* create_text_layer(GRect coords, int font, GTextAlignment align) {
@@ -152,9 +150,11 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
      
    }  
 
-  
+
    
    if (units_changed & DAY_UNIT) { // on day change - change date (format depends on flag)
+     
+     uint8_t next_char_no;
      
      switch(flag_dateFormat){
        case 0:
@@ -162,10 +162,19 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
            strftime(s_date, sizeof(s_date), "%b    %d %Y", tick_time); // "DEC 10 2015"
            strncpy(&s_date[0], LANG_MONTH[flag_language][tick_time->tm_mon], 6);
          }  else {
-           strftime(s_date, sizeof(s_date), "%b %d %Y", tick_time); // "DEC 10 2015"
-           if (flag_language != LANG_DEFAULT) { // if custom language is set - pull from language array
-             strncpy(&s_date[0], LANG_MONTH[flag_language][tick_time->tm_mon], 3);
-           }  
+           
+             if (flag_language != LANG_DEFAULT) { // if custom language is set
+               strcpy(s_date, LANG_MONTH[flag_language][tick_time->tm_mon]);  // pull month from language array
+               utf8_str_to_upper(s_date, 0); // converting month to uppercase
+               next_char_no = 3;  // next date part will be inserted at byte position 3
+             }  else { // otherwise use 3-char month abbreviation
+               strftime(s_date, 7, "%b", tick_time); // inserting abbr. month name in current locale 
+               next_char_no = utf8_str_to_upper(s_date, 3); // converting it to uppercase, limiting to 3 chars and returning byte position where next date part will be inserted
+             }
+           
+             // addiing day and year
+             strftime(&s_date[next_char_no], 9, " %d %Y", tick_time);
+             
          }  
        
          break;
@@ -174,10 +183,24 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
            strftime(s_date, sizeof(s_date), "%d %b    %Y", tick_time); // "DEC 10 2015"
            strncpy(&s_date[3], LANG_MONTH[flag_language][tick_time->tm_mon], 6);
          }  else {
-           strftime(s_date, sizeof(s_date), "%d %b %Y", tick_time); // "DEC 10 2015"
-           if (flag_language != LANG_DEFAULT) { // if custom language is set - pull from language array
-             strncpy(&s_date[3], LANG_MONTH[flag_language][tick_time->tm_mon], 3);
-           }  
+           
+           strftime(s_date, 3, "%d", tick_time);  // inserting numeric day of the month
+           s_date[2] = ' ';  //replacing 0 terminator with space so the string can continue
+           
+           if (flag_language != LANG_DEFAULT) { // if custom language is set
+               strcpy(&s_date[3], LANG_MONTH[flag_language][tick_time->tm_mon]); //  pull month from language array
+               utf8_str_to_upper(s_date, 0); // converting it to uppercase
+               next_char_no = 7; // year will be inserted at position 7
+           } else { // otherwise use 3-char month abbreviation
+               strftime(&s_date[3], 7, "%b", tick_time); // inserting abbr. month name in current locale 
+               next_char_no = utf8_str_to_upper(s_date, 6); // converting it to uppercase, limiting to 6 chars (3 for day + 2 for month )and returning byte position where year will be inserted
+           }
+           
+           
+          s_date[next_char_no] = ' ';  //replacing 0 terminator with space so the string can continue
+          strftime(&s_date[next_char_no+1], 5, "%Y", tick_time); // inserting year part
+           
+          
          }  
        
          break;
@@ -187,7 +210,7 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
        
      }
      
-     uppercase(s_date);
+
      text_layer_set_text(date_layer, s_date);
      
      if (flag_language != LANG_DEFAULT) { // if custom language is set - pull from language array
@@ -196,7 +219,7 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
          strftime(s_dow, sizeof(s_dow), "%A", tick_time);
      }
      
-     uppercase(s_dow);
+     utf8_str_to_upper(s_dow, 0);
      
      #ifdef PBL_RECT  // on rectangular watches need to dynamically change DoW font based on length
       if (strlen(s_dow) >= 10) {
@@ -346,11 +369,7 @@ static void window_load(Window *window) {
     effect_layer_add_effect(battery_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(battery_effect));
   
-   #endif
-  
-  
-  // background bitmap blur effect
-  #ifndef PBL_PLATFORM_APLITE
+
      back_effect = effect_layer_create(window_bound);
      back_mask = (EffectMask){.bitmap_background = gbitmap_create_with_resource(RESOURCE_ID_BACK), .background_color = GColorClear, .bitmap_mask = NULL, .text = NULL };
      back_mask.mask_colors = malloc(sizeof(GColor)*2);
@@ -379,13 +398,6 @@ static void window_unload(Window *window) {
    effect_layer_destroy(back_effect);
 }
 
-#ifndef PBL_SDK_2
-static void app_focus_changed(bool focused) {
-  if (focused) { // on resuming focus - restore background
-    layer_mark_dirty(effect_layer_get_layer(back_effect));
-  }
-}
-#endif
 
 void handle_init(void) {
   
@@ -398,12 +410,6 @@ void handle_init(void) {
   //going international
   setlocale(LC_ALL, "");
   
-  #ifndef PBL_SDK_2
-  // need to catch when app resumes focus after notification, otherwise background won't restore
-  //app_focus_service_subscribe_handlers((AppFocusHandlers){
-  //  .did_focus = app_focus_changed
-  //});
-  #endif
   
   my_window = window_create();
   window_set_background_color(my_window, GColorBlack);
@@ -421,7 +427,7 @@ void handle_init(void) {
   flag_hoursMinutesSeparator = persist_exists(KEY_HOURS_MINUTES_SEPARATOR)? persist_read_int(KEY_HOURS_MINUTES_SEPARATOR) : 0;
   flag_dateFormat = persist_exists(KEY_DATE_FORMAT)? persist_read_int(KEY_DATE_FORMAT) : 0;
   flag_language = persist_exists(KEY_LANGUAGE)? persist_read_int(KEY_LANGUAGE) : LANG_DEFAULT;
-  flag_bluetooth_alert = persist_exists(KEY_BLUETOOTH_ALERT)? persist_read_int(KEY_BLUETOOTH_ALERT) : 0;
+  flag_bluetooth_alert = persist_exists(KEY_BLUETOOTH_ALERT)? persist_read_int(KEY_BLUETOOTH_ALERT) : BLUETOOTH_ALERT_WEAK;
   
   // initial bluetooth check
   is_buzz_enabled = 0;
