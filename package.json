@@ -1,7 +1,7 @@
 {
     "author": "yuri@galanter.net",
     "dependencies": {
-        "pebble-effect-layer": "^1.1.4"
+        "pebble-effect-layer": "^1.4.0"
     },
     "keywords": [],
     "name": "brick-neon",
@@ -45,6 +45,33 @@
                     "type": "font"
                 },
                 {
+                    "characterRegex": "[0-9:.]",
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_72",
+                    "targetPlatforms": [
+                        "emery"
+                    ],
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_30",
+                    "targetPlatforms": [
+                        "emery"
+                    ],
+                    "trackingAdjust": 1,
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Neon.ttf",
+                    "name": "NEON_24",
+                    "targetPlatforms": [
+                        "emery"
+                    ],
+                    "trackingAdjust": 1,
+                    "type": "font"
+                },
+                {
                     "file": "images/back64.png",
                     "name": "BACK",
                     "targetPlatforms": [
@@ -73,12 +100,13 @@
             "aplite",
             "basalt",
             "chalk",
-            "diorite"
+            "diorite",
+            "emery"
         ],
         "uuid": "583b052b-063b-4e26-80ed-791e80edeac3",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "1.24.0"
+    "version": "1.30.0"
 }
