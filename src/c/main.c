@@ -29,6 +29,10 @@ EffectOffset time_offset, dow_offset, date_offset, battery_offset, logo_offset;
 EffectMask back_mask;
 BitmapLayer *left_line, *right_line;
 
+#ifdef PBL_PLATFORM_EMERY
+BitmapLayer *emery_bottom_cover;
+#endif
+
 BitmapLayer *logo_layer;
 GBitmap *logo_bitmap;
 
@@ -92,23 +96,20 @@ static void battery_handler(BatteryChargeState state) {
   
   #ifdef PBL_COLOR
   
-    static GColor battery_color, battery_text_color, date_color;  
-    // doing battery color in ranges with fall thru:
-    //       100% - 50% - GColorJaegerGreen
-    //       49% - 20% - GColorChromeYellow
-    //       19% - 0% - GColorDarkCandyAppleRed
-    switch (state.charge_percent) {
-         case 100: 
-         case 90: 
-         case 80: 
-         case 70: 
-         case 60: 
-         case 50: battery_color = GColorJaegerGreen; battery_text_color=GColorMintGreen; date_color = GColorChromeYellow; break;
-         case 40: 
-         case 30: 
-         case 20: battery_color = GColorChromeYellow; battery_text_color = GColorPastelYellow; date_color = GColorGreen; break;
-         case 10: 
-         case 0:  battery_color = GColorMagenta; battery_text_color = GColorRichBrilliantLavender; date_color = GColorChromeYellow; break;     
+    static GColor battery_color, battery_text_color, date_color;
+    // Bucket by decile so finer-grained values (e.g. Emery's 85%) still match.
+    // 100%-50% JaegerGreen, 49%-20% ChromeYellow, 19%-0% Magenta.
+    switch (state.charge_percent / 10) {
+         case 10:
+         case 9:
+         case 8:
+         case 7:
+         case 6:
+         case 5: battery_color = GColorJaegerGreen; battery_text_color=GColorMintGreen; date_color = GColorChromeYellow; break;
+         case 4:
+         case 3:
+         case 2: battery_color = GColorChromeYellow; battery_text_color = GColorPastelYellow; date_color = GColorGreen; break;
+         default: battery_color = GColorMagenta; battery_text_color = GColorRichBrilliantLavender; date_color = GColorChromeYellow; break;
      }
        text_layer_set_text_color(time_layer, battery_text_color);
        battery_offset.offset_color = battery_color;
@@ -126,7 +127,7 @@ static void battery_handler(BatteryChargeState state) {
 //handling time
 void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   
-   char format[5];
+   char format[6];
      
    // building format 12h/24h
    if (clock_is_24h_style()) {
@@ -302,73 +303,102 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
 
 static void window_load(Window *window) {
-  
+
+  // Per-platform layout (Emery gets its own native 200x228 design).
+  GRect logo_rect, time_rect, dow_rect, date_rect, battery_rect;
+  GRect left_line_rect, right_line_rect;
+  uint32_t time_font_id, dow_font_id, date_font_id, battery_font_id;
+
+  #ifdef PBL_PLATFORM_EMERY
+    logo_rect          = GRect(42, 4, 115, 30);
+    time_rect          = GRect(0, 28, window_bound.size.w, 75);
+    dow_rect           = GRect(0, 122, window_bound.size.w, 38);
+    date_rect          = GRect(0, 163, window_bound.size.w, 38);
+    battery_rect       = GRect(window_bound.size.w/2 - 30, 199, 60, 26);
+    left_line_rect     = GRect(window_bound.origin.x + 4, 212, window_bound.size.w/2 - 35, 2);
+    right_line_rect    = GRect(window_bound.size.w/2 + 31, 212, window_bound.size.w/2 - 35, 2);
+    time_font_id       = RESOURCE_ID_NEON_72;
+    dow_font_id        = RESOURCE_ID_NEON_30;
+    date_font_id       = RESOURCE_ID_NEON_30;
+    battery_font_id    = RESOURCE_ID_NEON_24;
+  #else
+    logo_rect          = PBL_IF_RECT_ELSE(GRect(14, 1, 115, 35), GRect(36, 18, 115, 35));
+    time_rect          = PBL_IF_RECT_ELSE(GRect(0, 25, window_bound.size.w, 55), GRect(0, 38, window_bound.size.w, 55));
+    dow_rect           = PBL_IF_RECT_ELSE(GRect(0, 90, window_bound.size.w, 30), GRect(0, 94, window_bound.size.w, 30));
+    date_rect          = GRect(0, 120, window_bound.size.w, 30);
+    battery_rect       = GRect(window_bound.size.w/2 - 47/2, 147, 47, 20);
+    left_line_rect     = GRect(window_bound.origin.x + 4, 157, window_bound.size.w/2 - 28, 2);
+    right_line_rect    = GRect(window_bound.size.w/2 + 25, 157, window_bound.size.w/2 - 30, 2);
+    time_font_id       = RESOURCE_ID_NEON_53;
+    dow_font_id        = RESOURCE_ID_NEON_22;
+    date_font_id       = PBL_IF_RECT_ELSE(RESOURCE_ID_NEON_22, RESOURCE_ID_NEON_20);
+    battery_font_id    = RESOURCE_ID_NEON_18;
+  #endif
+
   //creating Pebble Logo
-  logo_layer = PBL_IF_RECT_ELSE(bitmap_layer_create(GRect(14,1,115,35)), bitmap_layer_create(GRect(36,18,115,35)));
+  logo_layer = bitmap_layer_create(logo_rect);
   bitmap_layer_set_compositing_mode(logo_layer, GCompOpSet); //make transparent
   logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_LOGO);
   bitmap_layer_set_bitmap(logo_layer, logo_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(logo_layer));
-  
+
   // creating time layer with effects
-  time_layer = create_text_layer(PBL_IF_RECT_ELSE(GRect(0, 25, window_bound.size.w, 55), GRect(0, 38, window_bound.size.w, 55)), RESOURCE_ID_NEON_53, GTextAlignmentCenter);
+  time_layer = create_text_layer(time_rect, time_font_id, GTextAlignmentCenter);
   #ifdef PBL_COLOR
     text_layer_set_text_color(time_layer, GColorMintGreen);
   #endif
- 
-  // creating DOW layer with effects
-  dow_layer = create_text_layer(PBL_IF_RECT_ELSE(GRect(0, 90, window_bound.size.w, 30), GRect(0, 94, window_bound.size.w, 30)), RESOURCE_ID_NEON_22, GTextAlignmentCenter);
-  
-  // creating date layer with effects
-  date_layer = create_text_layer(GRect(0, 120, window_bound.size.w, 30), PBL_IF_RECT_ELSE(RESOURCE_ID_NEON_22, RESOURCE_ID_NEON_20), GTextAlignmentCenter);
-  
-  // creating battery layer with effects
-  battery_layer = create_text_layer(GRect(window_bound.size.w/2 - 47/2, 147, 47, 20), RESOURCE_ID_NEON_18, GTextAlignmentCenter);
 
-  
+  // creating DOW layer with effects
+  dow_layer = create_text_layer(dow_rect, dow_font_id, GTextAlignmentCenter);
+
+  // creating date layer with effects
+  date_layer = create_text_layer(date_rect, date_font_id, GTextAlignmentCenter);
+
+  // creating battery layer with effects
+  battery_layer = create_text_layer(battery_rect, battery_font_id, GTextAlignmentCenter);
+
   //creating lines for surrounding battery percentage
-  
-    left_line = bitmap_layer_create(GRect(window_bound.origin.x + 4, 157, window_bound.size.w / 2  - 28, 2));
-    bitmap_layer_set_background_color(left_line, GColorWhite);
-    layer_add_child(window_layer, bitmap_layer_get_layer(left_line));
-    
-    right_line = bitmap_layer_create(GRect(window_bound.size.w / 2 + 25, 157, window_bound.size.w / 2 - 30, 2));
-    bitmap_layer_set_background_color(right_line, GColorWhite);
-    layer_add_child(window_layer, bitmap_layer_get_layer(right_line));
-  
+  left_line = bitmap_layer_create(left_line_rect);
+  bitmap_layer_set_background_color(left_line, GColorWhite);
+  layer_add_child(window_layer, bitmap_layer_get_layer(left_line));
+
+  right_line = bitmap_layer_create(right_line_rect);
+  bitmap_layer_set_background_color(right_line, GColorWhite);
+  layer_add_child(window_layer, bitmap_layer_get_layer(right_line));
+
   // applying outline & blur to create "neon" effect
   #ifdef PBL_COLOR
-  
-    logo_effect = PBL_IF_RECT_ELSE(effect_layer_create(GRect(14,1,115,35)), effect_layer_create(GRect(36,18,115,35)));
+
+    logo_effect = effect_layer_create(logo_rect);
     logo_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(logo_effect, effect_outline, &logo_offset);
     effect_layer_add_effect(logo_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(logo_effect));
-   
-    time_effect = effect_layer_create(PBL_IF_RECT_ELSE(GRect(0, 25, window_bound.size.w, 55), GRect(0, 38, window_bound.size.w, 55)));
+
+    time_effect = effect_layer_create(time_rect);
     time_offset = (EffectOffset){.orig_color = GColorMintGreen, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(time_effect, effect_outline, &time_offset);
     effect_layer_add_effect(time_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(time_effect));
-  
-    dow_effect = effect_layer_create(PBL_IF_RECT_ELSE(GRect(0, 90, window_bound.size.w, 30), GRect(0, 94, window_bound.size.w, 30)));
+
+    dow_effect = effect_layer_create(dow_rect);
     dow_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorCyan, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(dow_effect, effect_outline, &dow_offset);
     effect_layer_add_effect(dow_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(dow_effect));
-  
-    date_effect = effect_layer_create(GRect(0, 120, window_bound.size.w, 30));
+
+    date_effect = effect_layer_create(date_rect);
     date_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorChromeYellow, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(date_effect, effect_outline, &date_offset);
     effect_layer_add_effect(date_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(date_effect));
-  
-    battery_effect = effect_layer_create(GRect(0, 147, window_bound.size.w, 20));
+
+    battery_effect = effect_layer_create(GRect(0, battery_rect.origin.y, window_bound.size.w, battery_rect.size.h));
     battery_offset = (EffectOffset){.orig_color = GColorWhite, .offset_color = GColorGreen, .offset_x = 1, .offset_y = 1 };
     effect_layer_add_effect(battery_effect, effect_outline, &battery_offset);
     effect_layer_add_effect(battery_effect, effect_blur, (void *)1);
     layer_add_child(window_layer, effect_layer_get_layer(battery_effect));
-  
+
 
      back_effect = effect_layer_create(window_bound);
      back_mask = (EffectMask){.bitmap_background = gbitmap_create_with_resource(RESOURCE_ID_BACK), .background_color = GColorClear, .bitmap_mask = NULL, .text = NULL };
@@ -377,9 +407,15 @@ static void window_load(Window *window) {
      back_mask.mask_colors[1] = GColorClear;
      effect_layer_add_effect(back_effect, effect_mask, &back_mask);
      layer_add_child(window_layer, effect_layer_get_layer(back_effect));
+
+     #ifdef PBL_PLATFORM_EMERY
+       emery_bottom_cover = bitmap_layer_create(GRect(0, 224, window_bound.size.w, 4));
+       bitmap_layer_set_background_color(emery_bottom_cover, GColorBlack);
+       layer_add_child(window_layer, bitmap_layer_get_layer(emery_bottom_cover));
+     #endif
   #endif
- 
-  
+
+
 }
 
 static void window_unload(Window *window) {
@@ -396,14 +432,22 @@ static void window_unload(Window *window) {
    effect_layer_destroy(battery_effect);
    if (back_mask.bitmap_background) gbitmap_destroy(back_mask.bitmap_background);
    effect_layer_destroy(back_effect);
+   #ifdef PBL_PLATFORM_EMERY
+     bitmap_layer_destroy(emery_bottom_cover);
+   #endif
 }
 
 
 void handle_init(void) {
   
   #ifdef PBL_RECT  // on rectangular watches need to dynamically change DoW font based on length
-    font_neon_18 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_18));
-    font_neon_22 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_22));
+    #ifdef PBL_PLATFORM_EMERY
+      font_neon_18 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_24));
+      font_neon_22 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_30));
+    #else
+      font_neon_18 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_18));
+      font_neon_22 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_NEON_22));
+    #endif
   #endif
   
   
